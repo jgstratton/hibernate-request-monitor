@@ -1,0 +1,22 @@
+{
+    "name": "Hibernate Request Monitor",
+    "version": "0.0.1",
+    "author": "Jesse Stratton <jgs.stratton@gmail.com>",
+    "slug": "hibernate-request-monitor",
+    "shortDescription": "A developer tool to view into orm statistics and queries",
+    "type": "plugin",
+    "license": [
+        {
+            "type": "Apache2",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        }
+    ],
+    "contributors": ["Jesse Stratton <jgs.stratton@gmail.com>"],
+    "devDependencies": {
+        "commandbox-dotenv": "*",
+        "commandbox-cfconfig": "*"
+    },
+    "scripts": {
+        "postInstall": "pathExists .env || cp .env.template .env"
+    }
+}

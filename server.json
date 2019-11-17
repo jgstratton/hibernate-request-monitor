@@ -1,0 +1,13 @@
+{
+    "app":{
+        "cfengine":"adobe@11"
+    },
+    "name":"hibernate-monitor",
+    "web":{
+        "webroot":"src",
+        "http":{
+            "enable":true,
+            "port":3000
+        }
+    }
+}

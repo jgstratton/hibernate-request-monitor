@@ -1,0 +1,1 @@
+<cfinclude template="/plugins/hibernateRequestMonitor/index.cfm">

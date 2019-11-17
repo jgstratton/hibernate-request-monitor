@@ -1,0 +1,210 @@
+<cfset requestMonitor = application.hibernateMonitor>
+<cfset requestStatistics = requestMonitor.getRequestStatistics()>
+
+<html>
+<head>
+	<cfoutput>
+		<cfset path = requestMonitor.getClientPath()>
+
+		<script 
+			src="https://code.jquery.com/jquery-3.2.1.slim.min.js" 
+			integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" 
+			crossorigin="anonymous"></script>
+
+		<script 
+			src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" 
+			integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" 
+			crossorigin="anonymous"></script>
+
+		<script 
+			src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" 
+			integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" 
+			crossorigin="anonymous"></script>
+
+		<link 
+			rel="stylesheet" 
+			href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" 
+			integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" 
+			crossorigin="anonymous">
+
+
+		<script type="text/javascript" src="#path#/assets/monitor.js"></script>
+
+		<link href="#requestMonitor.getClientPath()#/assets/monitor.css" rel="stylesheet">
+		
+		<script>
+			var url = '#requestMonitor.getClientPath()#/index.cfm';
+		</script>
+	</cfoutput>
+</head>
+<body>
+	<h3>Hibernate Request Statistics Monitor</h3>
+	<cfoutput>
+		<cfloop index="error" array="#requestMonitor.getErrors()#">
+			<div class="alert alert-danger">#error.message#</div>
+		</cfloop>
+
+		<div class="content-body">
+			<div class="row">
+				<div class="col-sm-5">
+					<div class="card">
+						<div class="card-header">Request Log</div>
+						<div class="panel-resizable" style="height:700px">
+							<table class="table table-condensed ACTIVE" id="requestLog">
+								<thead>
+									<tr>
+										<th></th>
+										<th>Request</th>
+										<th></th>
+										<th></th>
+									</tr>
+								</thead>
+								<tbody>
+									<cfloop from="1" to="#requestStatistics.len()#" index="i">
+										<cfset requestStatistic = requestStatistics[i]>
+										<tr data-request-id="#requestStatistic.getRequestId()#">
+											<td>#i#</td>
+											<td>#requestStatistic.getRequestName()#</td>
+											<td class="text-right">#requestStatistic.getRequestTime()# ms</td>
+											<td>
+												<table class="stats-table pull-right">
+													<tr>
+														<td>Fetches</td>
+														<td class="text-right">#requestStatistic.getTotalFetchCount()#</td>
+													</tr>
+													<tr>
+														<td>Loads</td>
+														<td class="text-right">#requestStatistic.getTotalLoadCount()#</td>
+													</tr>
+													<tr>
+														<td>HQL Statistics</td>
+														<td class="text-right" data-fetch="queryStatistics" data-count="#requestStatistic.getOrmQueryStatistics().len()#"></td>
+													</tr>
+													<tr>
+														<td>Entity Statistics</td>
+														<td class="text-right" data-fetch="entityStatistics" data-count="#requestStatistic.getEntityStatistics().len()#"></td>
+													</tr>
+													<tr>
+														<td>Executed Queries</td>
+														<td class="text-right" data-fetch="executedQueries" data-count="#requestStatistic.getExecutedQueries().recordcount#"></td>
+													</tr>
+												</table>
+											</td>
+										</tr>
+									</cfloop>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-7">
+					<div class="row">
+						<div class="col-sm-12">
+							<div class="card">
+								<div class="card-header">HQL Statistics</div>
+								<div class="panel-resizable" id="queryStatistics">
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-12" id="loadedStats">
+							<div class="card">
+								<div class="card-header">Entity Statistics</div>
+								<div class="panel-resizable" id="entityStatistics">
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-12" id="loadedStats">
+							<div class="card">
+								<div class="card-header">Executed Queries</div>
+								<div class="panel-resizable" id="executedQueries">
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>	
+			</div>
+		</div>	
+	</cfoutput>
+	
+	<script>
+		var clientUrl = '';
+
+		$("[data-request-id]").each(function(){
+			var $tr = $(this);
+			var requestId = $tr.data('requestId');
+			var fetches = [];
+			var skipfetch = [];
+
+			$tr.find("[data-fetch]").each(function(){
+				$td = $(this);
+				if ($td.data('count') > 0) {
+					$(this).html($td.data('count'));
+					fetches.push($td.data('fetch'));
+				} else {
+					$td.html('---');
+					skipfetch.push($td.data('fetch'));
+				}
+			});
+
+			$tr.on("click", function(){
+				for (var i = 0; i < fetches.length; i++) {
+					fetchStatistics(requestId, fetches[i], $("#" + fetches[i]));
+				}
+				for (var i = 0; i < skipfetch.length; i++) {
+					$("#" + skipfetch[i]).html('(no data)');
+				}
+			});
+		});
+
+		function fetchStatistics(requestId, type, $element) {
+			$.ajax({
+				url:url,
+				data: {
+					api: type,
+					requestId: requestId
+				},
+				success: function(response) {
+					$element.html('');
+					$element.append(createTable(response.data));
+				},
+				error: function(jqXhr, textStatus, errorThrown) {
+					alert(errorThrown);
+				}
+			});
+		}
+
+		function createTable(data) {
+			if (data.length > 0) {
+				var $table = $("<table></table>").addClass('table').addClass('loaded-data').addClass('table-condensed');
+				var $tbody = $("<tbody></tbody>");
+				var $thead = $("<thead></thead>");
+				var $theadRow = $("<tr></tr>");
+				var keys = [];
+				for( var key in data[0]) {
+					keys.push(key);		
+					$theadRow.append($("<th></th>").html(key));
+					$thead.append($theadRow);
+				}
+				for( var i = 0; i < data.length; i++) {
+					var item = data[i];
+					var $tr = $("<tr></tr>");
+					for( var j = 0; j < keys.length; j++) {
+						var key = keys[j];
+						var $td = $("<td></td>");
+						$td.append(
+							$("<div class='data-div'></div>")
+								.html(formatTableCell(item[key]))
+								.prop('title',item[key])
+						);
+						$tr.append($td);
+					}
+					$tbody.append($tr);
+				}
+				$table.append($thead).append($tbody);
+				return $table;
+			}
+			return '';
+		}
+	</script>
+</body>
+</html>
