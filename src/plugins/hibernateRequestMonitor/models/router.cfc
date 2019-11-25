@@ -39,6 +39,7 @@ component accessors="true" {
 		cfheader(name="Content-Type", value="application/json");
 
 		var response = invoke(getApiController(), "get" & context.api, {context: context});
+		setting showdebugoutput = false;
 		return serializeJSON(response,'struct',false);
 	}
 	
@@ -47,6 +48,7 @@ component accessors="true" {
 		savecontent variable="response" {
 			include '#getPath()#/#viewPath#';
 		}
+		setting showdebugoutput = false;
 		return response;
 	}
 

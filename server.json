@@ -2,7 +2,7 @@
     "app":{
         "cfengine":"adobe@11"
     },
-    "name":"hibernate-monitor",
+    "name":"hibernate-request-monitor",
     "web":{
         "webroot":"src",
         "http":{

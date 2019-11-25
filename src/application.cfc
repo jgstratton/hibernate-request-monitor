@@ -1,4 +1,4 @@
-component {
+component extends="framework.one"{
 	this.name = "hibernate-montitor-app";
 	
 	ROOT_PATH = Replace(getDirectoryFromPath(getCurrentTemplatePath()), '\', '/', 'all');
@@ -14,25 +14,71 @@ component {
 		flushAtRequestEnd : true
 	};
 
-	public boolean function onApplicationStart() {
-		setupApplication();
-		return true;
-	}
+	variables.framework = {
+		defaultSection = 'main',
+		defaultItem = 'default',
+		reload = 'reload',
+		password = 'true',
+		reloadApplicationOnEveryRequest = false,
+		unhandledPaths = '/plugins/hibernateRequestMonitor',
+		diLocations = "./models/orm,./models/services,./controllers",
+		diConfig = {
+			singulars : { orm : "bean" }
+		},
+		viewsFolder = "views"
+	};
 
 	public boolean function onRequestStart(required string targetPath) {
-		if (isReloadRequest()) {
-			setupApplication();
-		}
-		application.hibernateMonitor.requestStart(targetPath);
+		super.onRequestStart(arguments.targetPath);
+		application.hibernateMonitor.requestStart(this.getSectionAndItem(), targetPath);
 		return true;
 	}
 
 	public void function onRequestEnd(required string targetPath) {
 		application.hibernateMonitor.requestEnd();
+		super.onRequestEnd(arguments.targetPath);
 		setting showdebugoutput = false;
 	}
+	
+	/**
+	 * Use the custom template engine to dump any errors in the view or layout where they occured.
+	 */
+	public any function customTemplateEngine( string type, string path, struct args ) {
+		var response = '';
+		structAppend( local, arguments.args );
+		local.path = local.path ?: arguments.viewpath;
+		local.path = local.path ?: arguments.layoutpath;
 
-	private void function setupApplication() {
+		if (!local.keyExists('path') || !len(local.path)) {
+			savecontent variable="response" {
+				writedump('Unable to resolve path');
+				writedump(arguments);
+			}
+			return response;
+		}
+
+		try {
+			savecontent variable="response" {
+				include '#local.path#';
+			}
+		} catch (any e) {
+			savecontent variable="response" {
+				writedump(e);
+			}
+		}
+
+		return response;	
+	}
+
+	public void function onError(any exception) {
+		writedump(var="An error has occured");
+		writedump(var="#exception#", top="10", format="html");
+	}
+
+	public void function setupApplication() {
+		ormReload();
+		application.rootPath = ROOT_PATH;
+		application.beanfactory = this.getBeanFactory();
 		application.hibernateMonitor = new plugins.hibernateRequestMonitor.models.hibernateMonitor({
 			requestFilter: function(requestName, requestPath) {
 				return !findNoCase('hibernateRequestMonitor', requestName);
@@ -40,9 +86,5 @@ component {
 			path: '/plugins/hibernateRequestMonitor',
 			clientPath: '/plugins/hibernateRequestMonitor'
 		});
-	}
-
-	private boolean function isReloadRequest() {
-		return isDefined('URL')  && URL.keyExists('reload') && URL.reload == 'true';
 	}
 }

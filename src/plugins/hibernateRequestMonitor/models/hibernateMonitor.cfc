@@ -85,7 +85,6 @@
 
 	/**
 	 * This returns the entire requestHistory array and all it's data.
-	 * The caller can query/sort/filter as they see fit.
 	 */
 	public array function getRequestStatistics(){
 		return variables.requestHistory;

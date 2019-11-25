@@ -6,9 +6,9 @@
 	<cfoutput>
 		<cfset path = requestMonitor.getClientPath()>
 
-		<script 
-			src="https://code.jquery.com/jquery-3.2.1.slim.min.js" 
-			integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" 
+		<script
+			src="https://code.jquery.com/jquery-3.4.1.min.js"
+			integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
 			crossorigin="anonymous"></script>
 
 		<script 
@@ -60,7 +60,7 @@
 									</tr>
 								</thead>
 								<tbody>
-									<cfloop from="1" to="#requestStatistics.len()#" index="i">
+									<cfloop from="#requestStatistics.len()#" to="1" index="i" step="-1">
 										<cfset requestStatistic = requestStatistics[i]>
 										<tr data-request-id="#requestStatistic.getRequestId()#">
 											<td>#i#</td>
