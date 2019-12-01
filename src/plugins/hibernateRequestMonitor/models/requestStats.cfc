@@ -9,6 +9,7 @@ component accessors="true" {
 	property name="ormQueryStatistics" type="array";
 	property name="entityStatistics" type="array";
 	property name="executedQueries" type="query";
+	property name="executedQueryCount" type="numeric";
 	property name="requestStart" type="numeric";
 	property name="requestTime" type="numeric";
 	property name="flushCount" type="numeric";
@@ -64,7 +65,8 @@ component accessors="true" {
 	}
 
 	public void function populateGeneratedQueries() {
-		try {
+		if (variables.monitor.getSupportedFeatures().executedQueries) {
+
 			tempFactory = createObject("java", "coldfusion.server.ServiceFactory");
 			tempCfdebugger = tempFactory.getDebuggingService();
 			tempDebugger = tempCfdebugger.getDebugger(); 
@@ -84,7 +86,7 @@ component accessors="true" {
 				var startSelect = find("select",body);
 				executedQueries.body[i] = right(body,len(body)-startSelect+1);
 			}
-	
+
 			executedQueries = queryExecute("
 				SELECT body, template, line, stacktrace
 				FROM executedQueries 
@@ -93,9 +95,7 @@ component accessors="true" {
 					dbtype: 'query'
 				});
 			setExecutedQueries(executedQueries);
-		} catch(any e) {
-			variables.monitor.addError(e);
-		}	
+		}
 	}
 
 	public numeric function getTotalFetchCount() {

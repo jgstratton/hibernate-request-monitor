@@ -1,5 +1,6 @@
 <cfset requestMonitor = application.hibernateMonitor>
 <cfset requestStatistics = requestMonitor.getRequestStatistics()>
+<cfset hasExecutedQueries = requestMonitor.isFeatureSupported('executedQueries')>
 
 <html>
 <head>
@@ -43,7 +44,6 @@
 		<cfloop index="error" array="#requestMonitor.getErrors()#">
 			<div class="alert alert-danger">#error.message#</div>
 		</cfloop>
-
 		<div class="content-body">
 			<div class="row">
 				<div class="col-sm-5">
@@ -84,10 +84,12 @@
 														<td>Entity Statistics</td>
 														<td class="text-right" data-fetch="entityStatistics" data-count="#requestStatistic.getEntityStatistics().len()#"></td>
 													</tr>
-													<tr>
-														<td>Executed Queries</td>
-														<td class="text-right" data-fetch="executedQueries" data-count="#requestStatistic.getExecutedQueries().recordcount#"></td>
-													</tr>
+													<cfif hasExecutedQueries>
+														<tr>
+															<td>Executed Queries</td>
+															<td class="text-right" data-fetch="executedQueries" data-count="#requestStatistic.getExecutedQueries().recordcount#"></td>													
+														</tr>
+													</cfif>
 												</table>
 											</td>
 										</tr>
@@ -113,13 +115,15 @@
 								</div>
 							</div>
 						</div>
-						<div class="col-sm-12" id="loadedStats">
-							<div class="card">
-								<div class="card-header">Executed Queries</div>
-								<div class="panel-resizable" id="executedQueries">
+						<cfif hasExecutedQueries>
+							<div class="col-sm-12" id="loadedStats">
+								<div class="card">
+									<div class="card-header">Executed Queries</div>
+									<div class="panel-resizable" id="executedQueries">
+									</div>
 								</div>
 							</div>
-						</div>
+						</cfif>
 					</div>
 				</div>	
 			</div>
@@ -134,12 +138,12 @@
 			var requestId = $tr.data('requestId');
 			var fetches = [];
 			var skipfetch = [];
-
+				
 			$tr.find("[data-fetch]").each(function(){
 				$td = $(this);
 				if ($td.data('count') > 0) {
 					$(this).html($td.data('count'));
-					fetches.push($td.data('fetch'));
+						fetches.push($td.data('fetch'));
 				} else {
 					$td.html('---');
 					skipfetch.push($td.data('fetch'));

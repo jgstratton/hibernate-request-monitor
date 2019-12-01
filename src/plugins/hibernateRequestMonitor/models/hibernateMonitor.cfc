@@ -17,6 +17,7 @@
 	property name="clientPath" type="string";
 	property name="router";
 	property name="errors" type="array";
+	property name="supportedFeatures" type="struct" setter="false";
 
 	/**
 	 * When initializing the component, the caller can pass a config 
@@ -37,6 +38,8 @@
 			path: this.getPath(),
 			monitor: this
 		});
+
+		determineSupportedFeatures();
 		return this;
 	}
 
@@ -69,7 +72,6 @@
 	 * the current request's statistics and adds it to the request history.
 	 */
 	public void function requestEnd() {
-		
 		if (variables.keyExists('currentRequest')) {
 			variables.currentRequest.populateRequestStats();
 
@@ -164,6 +166,30 @@
 
 	private void function getNull() {
 		return;
+	}
+
+	
+	/**
+	 * The actual executed queries (sql) is logged in the qEvents in ColdFusion. In Lucee, I haven't found a way to
+	 * get the sql.  With a hibernate interceptor we should be able to get the sql in the OnPrepareStatement method, but
+	 * I can't figure out how to apply my own interceptor with the exposed orm methods.  For now, Lucee implementations
+	 * will just display the executed query count using the orm statistics.
+	 */
+	private void function determineSupportedFeatures() {
+		try {
+			tempFactory = createObject("java", "coldfusion.server.ServiceFactory");
+			tempCfdebugger = tempFactory.getDebuggingService();
+			tempDebugger = tempCfdebugger.getDebugger(); 
+			qEvents = tempDebugger.getData();
+			variables.supportedFeatures.executedQueries = true;
+		} catch (any e) {
+			variables.supportedFeatures.executedQueries = false;
+		}
+	}
+
+	public boolean function isFeatureSupported(required string featureName) {
+		var supportedFeatures = getSupportedFeatures();
+		return supportedFeatures.keyExists(featureName) && supportedFeatures[featureName];
 	}
 
 	/**

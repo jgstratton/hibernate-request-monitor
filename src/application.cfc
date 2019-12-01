@@ -5,6 +5,7 @@ component extends="framework.one"{
 
 	this.mappings["/plugins"] = ROOT_PATH & "plugins/";
 	this.mappings["/models"] = ROOT_PATH & "models/";
+	this.defaultdatasource="CarTracker";
 	
 	this.ormenabled = true;
 	this.ormsettings = {
@@ -39,6 +40,10 @@ component extends="framework.one"{
 		super.onRequestEnd(arguments.targetPath);
 		setting showdebugoutput = false;
 	}
+
+	public void function setupRequest() {
+
+	}
 	
 	/**
 	 * Use the custom template engine to dump any errors in the view or layout where they occured.
@@ -46,8 +51,15 @@ component extends="framework.one"{
 	public any function customTemplateEngine( string type, string path, struct args ) {
 		var response = '';
 		structAppend( local, arguments.args );
-		local.path = local.path ?: arguments.viewpath;
-		local.path = local.path ?: arguments.layoutpath;
+		if(!local.keyExists('path')) {
+			if(arguments.keyExists('path')) {
+				local.path = arguments.path;
+			} else if (arguments.keyExists('viewPath')) {
+				local.path = arguments.viewPath;
+			} else if (arguments.keyExists('layoutPath')) {
+				local.path = arguments.layoutPath;
+			}
+		}
 
 		if (!local.keyExists('path') || !len(local.path)) {
 			savecontent variable="response" {
