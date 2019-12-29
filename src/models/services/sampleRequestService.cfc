@@ -21,14 +21,14 @@ component accessors="true"{
 		return sampleRequests;
 	}
 
-	private array function getFilesInSampleRequestsFolder() {
-		return directoryList("#getRequestsDir()#", false, "name");
-	}
-
-	private string function getUrlFromFileName(required string fileName) {
+	public string function getUrlFromFileName(required string fileName) {
 		var fileNameArray = listToArray(fileName,".");
 		var viewName = fileNameArray[1];
 		return getFramework().buildUrl("sampleRequests.#viewName#");
+	}
+	
+	private array function getFilesInSampleRequestsFolder() {
+		return directoryList("#getRequestsDir()#", false, "name");
 	}
 
 	private string function getViewNameFromFileName(required string filename) {

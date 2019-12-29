@@ -28,14 +28,16 @@
 			integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" 
 			crossorigin="anonymous">
 
+		<link 
+			rel="stylesheet" 
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.css" 
+			integrity="sha256-46qynGAkLSFpVbEBog43gvNhfrOj+BmwXdxFgVK/Kvc=" 
+			crossorigin="anonymous" />
 
 		<script type="text/javascript" src="#path#/assets/monitor.js"></script>
 
 		<link href="#requestMonitor.getClientPath()#/assets/monitor.css" rel="stylesheet">
-		
-		<script>
-			var url = '#requestMonitor.getClientPath()#/index.cfm';
-		</script>
+
 	</cfoutput>
 </head>
 <body>
@@ -62,9 +64,23 @@
 								<tbody>
 									<cfloop from="#requestStatistics.len()#" to="1" index="i" step="-1">
 										<cfset requestStatistic = requestStatistics[i]>
-										<tr data-request-id="#requestStatistic.getRequestId()#">
+										<tr 
+											data-request-id="#requestStatistic.getRequestId()#"
+											data-collisions="#requestStatistic.getCollisions().len()#">
 											<td>#i#</td>
-											<td>#requestStatistic.getRequestName()#</td>
+											<td>
+												#requestStatistic.getRequestName()#
+												<cfif requestStatistic.getCollisions().len()>
+													<div class="alert alert-warning collision-warning">
+														<i class="fa fa-exclamation-triangle"></i> #requestStatistic.getCollisions().len()# overlapping requests.
+														<ul>
+															<cfloop index="collisionRequest" array="#requestStatistic.getCollisions()#">
+																<li>#collisionRequest#</li>
+															</cfloop>
+														</ul>
+													</div>
+												</cfif>
+											</td>
 											<td class="text-right">#requestStatistic.getRequestTime()# ms</td>
 											<td>
 												<table class="stats-table pull-right">
@@ -132,6 +148,7 @@
 	
 	<script>
 		var clientUrl = '';
+		var url = <cfoutput>'#requestMonitor.getClientPath()#/index.cfm'</cfoutput>;
 
 		$("[data-request-id]").each(function(){
 			var $tr = $(this);

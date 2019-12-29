@@ -18,6 +18,7 @@
 	property name="router";
 	property name="errors" type="array";
 	property name="supportedFeatures" type="struct" setter="false";
+	property name="debugEnabled" type="boolean";
 
 	/**
 	 * When initializing the component, the caller can pass a config 
@@ -26,7 +27,9 @@
 	public component function init(struct config = {}){
 		variables.requestHistory = [];
 		variables.requestLookup = {};
+		variables.collisions = {};
 		variables.errors = [];
+		variables.debugEnabled = false;
 		variables.requestFilter = function(requestString, requestPath) {
 			return true;
 		};
@@ -50,17 +53,40 @@
 	 */
 	public void function requestStart(string requestName = "", string requestPath = ""){
 		try {
-			var sessionFactory = ormGetSessionFactory();
+			lock name="hibernateRequestMonitor_lifecycle" timeout="10" {
+				//fw1 deletes the lifecycle methods for unhandled paths so we need to completely ignore any requests to the plugin
+				if (requestIsPluginPath(requestPath)) {
+					debug('Request to plugin ignored: #requestName#, #requestPath#');
+					return;
+				}
 
-			var sessionFactory = ormGetSessionFactory();
-			var statistics = sessionFactory.getStatistics();
-			statistics.clear();
+				if (!variables.requestFilter(requestName, requestPath)) {
+					debug('Request ignored by filter: #requestName#, #requestPath#');
+					return;
+				}
 
-			var requestFilter = getRequestFilter();
-			if (requestFilter(requestName, requestPath)) {
-				variables.currentRequest = new requestStats(this, requestName);
-			} else {
-				variables.currentRequest = getNull();
+				setMonitoredRequest();
+
+				if (isNull(variables.currentRequest)) {
+					var sessionFactory = ormGetSessionFactory();
+					var statistics = sessionFactory.getStatistics();
+					statistics.clear();
+					variables.currentRequest = new requestStats(this, getRequestId(), requestName);
+					debug('Started monitoring new request: #requestName#, #requestPath#');
+
+					if (structCount(variables.collisions)) {
+						for (var collisionId in variables.collisions) {
+							variables.currentRequest.addCollision(collisionId, variables.collisions[collisionId]);
+						}
+						debug("#structCount(variables.collisions)# existing collision requests added to new monitored request");
+					}
+					
+				} else {
+					debug('request monitoring in progress, adding collision: #requestName#, #requestPath#');
+					variables.collisions[getRequestId()] = requestName;
+					variables.currentRequest.addCollision(getRequestId(), variables.collisions[getRequestId()]);
+				}
+
 			}
 		} catch(any e) {
 			addError(e);
@@ -72,16 +98,43 @@
 	 * the current request's statistics and adds it to the request history.
 	 */
 	public void function requestEnd() {
-		if (variables.keyExists('currentRequest')) {
+		lock name="hibernateRequestMonitor_lifecycle" timeout="10" {
+
+			if (!isMonitoredRequest()){
+				debug("Request not monitored");
+				return;
+			}
+
+			if (!variables.keyExists('currentRequest')) {
+				debug("No current monitored request exists");
+				if (variables.collisions.keyExists(getRequestId())) {
+					variables.collisions.delete(getRequestId());
+					debug("Collision request cleared");
+				}
+				return;
+			}
+
+			if (variables.collisions.keyExists(getRequestId())) {
+				debug("Adding collision to currently running request");
+				variables.currentRequest.addCollision(getRequestId(), variables.collisions[getRequestId()]);
+				variables.collisions.delete(getRequestId());
+				return;
+			}
+
+			debug("Saving statistics for monitored request");
 			variables.currentRequest.populateRequestStats();
 
 			//if we've reached the max Requests, then delete the oldest before adding a new request
 			if (variables.requestHistory.len() > getMaxRequests()) {
+				debug("Max history reached, deleting oldest entry");
 				variables.requestLookup.delete(variables.requestHistory[1]);
 				variables.requestHistory.deleteAt(1);
 			}
 			variables.requestHistory.append(variables.currentRequest);
 			variables.requestLookup[variables.currentRequest.getRequestId()] = variables.currentRequest;
+			variables.delete('currentRequest');
+
+			debug("Monitored request completed");
 		}
 	}
 
@@ -162,6 +215,32 @@
 
 	public void function addError(required any error) {
 		getErrors().append(error);
+	}
+
+	private boolean function requestIsPluginPath(required string requestPath) {
+		if (findNoCase(getPath(),requestPath)) {
+			return true;
+		}
+		return false;
+	}
+
+	private void function debug(required string logText) {
+		if(getDebugEnabled()) {
+			var requestId = isMonitoredRequest() ? "[#getRequestId()#]" : "";
+			writeLog(type="debug", file="hrm", text="#requestId# #logtext#"); 
+		}
+	}
+
+	private boolean function isMonitoredRequest() {
+		return request.keyExists('_hibernateRequestMonitor_id');
+	}
+
+	private void function setMonitoredRequest() {
+		request._hibernateRequestMonitor_id = CreateUUID();
+	}
+
+	private string function getRequestId() {
+		return request._hibernateRequestMonitor_id;
 	}
 
 	private void function getNull() {

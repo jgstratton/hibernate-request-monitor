@@ -96,7 +96,8 @@ component extends="framework.one"{
 				return !findNoCase('hibernateRequestMonitor', requestName);
 			},
 			path: '/plugins/hibernateRequestMonitor',
-			clientPath: '/plugins/hibernateRequestMonitor'
+			clientPath: '/plugins/hibernateRequestMonitor',
+			debugEnabled: true
 		});
 	}
 }

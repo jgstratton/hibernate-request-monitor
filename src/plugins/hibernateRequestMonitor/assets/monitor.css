@@ -1,57 +1,61 @@
 * {
-    font-size: 12px;
+	font-size: 12px;
 }
 
 body {
-    padding: 0;
+	padding: 0;
 }
 
 .content-body {
-    padding: 10px;
+	padding: 10px;
 }
 
 h3 {
-    margin: 0;
-    padding: 10px;
-    background-color: darkslategray;
-    color: whitesmoke !important;
-    text-align: center;
+	margin: 0;
+	padding: 10px;
+	background-color: darkslategray;
+	color: whitesmoke !important;
+	text-align: center;
 }
 
 .panel {
-    border-radius: 0;
-    box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.1);
+	border-radius: 0;
+	box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.1);
 }
 
 table.active tbody tr:hover td {
-    background-color: darkslategray;
-    color: whitesmoke !important;
-    cursor: pointer;
+	background-color: darkslategray;
+	color: whitesmoke !important;
+	cursor: pointer;
 }
 
 table.loaded-data {
-    /*width: 100px;*/
+	/*width: 100px;*/
 }
 
 table.loaded-data .data-div {
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    /*height: 20px;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	/*height: 20px;
 	max-width: 200px;
 	overflow: hidden;
 	text-overflow: ellipsis;*/
 }
 
 .panel-resizable {
-    resize: vertical;
-    overflow: auto;
-    height: 200px;
+	resize: vertical;
+	overflow: auto;
+	height: 200px;
 }
 
 .stats-table {
-    width: 150px;
+	width: 150px;
 }
 .stats-table td {
-    padding-left: 3px;
-    padding-right: 3px;
+	padding-left: 3px;
+	padding-right: 3px;
+}
+
+.collision-warning {
+	margin-top: 5px;
 }

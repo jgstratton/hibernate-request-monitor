@@ -14,16 +14,19 @@ component accessors="true" {
 	property name="requestTime" type="numeric";
 	property name="flushCount" type="numeric";
 	property name="transactionCount" type="numeric";
+	property name="collisions" type="array";
 
-	public component function init(required component monitor, string requestName = "") {
+	public component function init(required component monitor, required string requestId = "", string requestName = "") {
 
 		this.setOrmQueryStatistics([])
 			.setOrmQueryStatistics([])
 			.setEntityStatistics([])
+			.setCollisions([])
 			.setRequestStart(getTickCount())
 			.setRequestName(requestName)
-			.setRequestId("#CreateUUID()#");
+			.setRequestId(requestId);
 		variables.monitor = arguments.monitor;
+		variables.collisionLookup = {};
 		return this;
 	}
 
@@ -55,7 +58,6 @@ component accessors="true" {
 			}
 		}
 
-		//grab the queries from the qEvents
 		populateGeneratedQueries();
 
 		setFlushCount(statistics.getFlushCount());
@@ -95,6 +97,13 @@ component accessors="true" {
 					dbtype: 'query'
 				});
 			setExecutedQueries(executedQueries);
+		}
+	}
+
+	public void function addCollision(required string id, required string name) {
+		if (!variables.collisionLookup.keyExists(id)) {
+			getCollisions().append(name);
+			variables.collisionLookup[id] = name;
 		}
 	}
 
