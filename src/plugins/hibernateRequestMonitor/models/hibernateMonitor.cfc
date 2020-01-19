@@ -33,6 +33,11 @@
 		variables.requestFilter = function(requestString, requestPath) {
 			return true;
 		};
+		variables.logger = {
+			debug: function(debugText){
+				writeLog(type="debug", file="hrm", text="#debugText#"); 
+			}
+		};
 
 		for (var property in config) {
 			variables[property] = config[property];
@@ -227,7 +232,7 @@
 	private void function debug(required string logText) {
 		if(getDebugEnabled()) {
 			var requestId = isMonitoredRequest() ? "[#getRequestId()#]" : "";
-			writeLog(type="debug", file="hrm", text="#requestId# #logtext#"); 
+			variables.logger.debug("#requestId# #logtext#");
 		}
 	}
 
