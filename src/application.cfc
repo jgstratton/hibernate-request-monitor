@@ -41,6 +41,10 @@ component extends="framework.one"{
 		setting showdebugoutput = false;
 	}
 
+	public void function onAbort(required string targetPath) {
+		application.hibernateMonitor.requestEnd();
+	}
+
 	public void function setupRequest() {
 
 	}
@@ -97,7 +101,12 @@ component extends="framework.one"{
 			},
 			path: '/plugins/hibernateRequestMonitor',
 			clientPath: '/plugins/hibernateRequestMonitor',
-			debugEnabled: true
+			debugEnabled: true,
+			logger: {
+				debug: function(debugText){
+					writeLog(type="debug", file="hrm", text="Application Logger: #debugText#"); 
+				}
+			}
 		});
 	}
 }
