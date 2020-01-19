@@ -83,6 +83,10 @@ public void function onRequestEnd(required string targetPath) {
 	super.onRequestEnd(arguments.targetPath);
 	setting showdebugoutput = false;
 }
+
+public void function onAbort(required string targetPath) {
+	application.hibernateMonitor.requestEnd();
+}
 ```
 
 ### Step 5: View the request statistics
