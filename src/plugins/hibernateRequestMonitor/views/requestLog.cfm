@@ -22,6 +22,11 @@
 			integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" 
 			crossorigin="anonymous"></script>
 
+		<script 
+			src="https://cdnjs.cloudflare.com/ajax/libs/jquery-jgrowl/1.4.6/jquery.jgrowl.min.js" 
+			integrity="sha256-n9wTGJrOSb/K8c7f+uyeiKukiyYhBzCvSc0Yk/JwrJg=" 
+			crossorigin="anonymous"></script>
+
 		<link 
 			rel="stylesheet" 
 			href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" 
@@ -32,6 +37,12 @@
 			rel="stylesheet" 
 			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.css" 
 			integrity="sha256-46qynGAkLSFpVbEBog43gvNhfrOj+BmwXdxFgVK/Kvc=" 
+			crossorigin="anonymous" />
+		
+		<link 
+			rel="stylesheet" 
+			href="https://cdnjs.cloudflare.com/ajax/libs/jquery-jgrowl/1.4.6/jquery.jgrowl.min.css" 
+			integrity="sha256-rRGO8pY78yb6wxrYHTrqfv0moskCfq+kv9GLCfE/1oc=" 
 			crossorigin="anonymous" />
 
 		<script type="text/javascript" src="#path#/assets/monitor.js"></script>
@@ -146,6 +157,24 @@
 		</div>	
 	</cfoutput>
 	
+	<div class="modal" id="sqlViewModal">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">View SQL</h4>
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+				</div>
+				<div class="modal-body">
+					<span id="sqlCopyBtn" class="btn btn-primary btn-sm float-right"><i class="fas fa-copy"></i> Copy SQL</span>
+					<pre id="sqlCodeView"></pre>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<script>
 		var clientUrl = '';
 		var url = <cfoutput>'#requestMonitor.getClientPath()#/index.cfm'</cfoutput>;
@@ -175,6 +204,18 @@
 					$("#" + skipfetch[i]).html('(no data)');
 				}
 			});
+		});
+
+		$("#sqlCopyBtn").on("click", function(){
+			if (copyToClipboard($("#sqlCodeView"))) {
+				$.jGrowl("SQL Copied");
+			} else {
+				$.jGrowl("Failed to copy SQL");
+			}
+		});
+
+		$("body").on("click", ".sqlLink", function(){
+			showSql($(this));
 		});
 
 		function fetchStatistics(requestId, type, $element) {
@@ -212,11 +253,17 @@
 					for( var j = 0; j < keys.length; j++) {
 						var key = keys[j];
 						var $td = $("<td></td>");
-						$td.append(
-							$("<div class='data-div'></div>")
-								.html(formatTableCell(item[key]))
-								.prop('title',item[key])
-						);
+						var $content = $("<div class='data-div'></div>");
+
+						if (stringContainsSql(item[key])) {
+							var $sqlLink = $('<span class="btn btn-link sqlLink p-0"><i class="far fa-file-code"></i> SQL</span>');
+							$sqlLink.data('sql',item[key]);
+							$content.html($sqlLink);	
+						} else {
+							$content.html(formatTableCell(item[key]));
+						}
+
+						$td.append($content);
 						$tr.append($td);
 					}
 					$tbody.append($tr);
@@ -225,6 +272,11 @@
 				return $table;
 			}
 			return '';
+		}
+
+		function showSql($sqlLink) {
+			$("#sqlViewModal").modal('show');
+			$("#sqlCodeView").html($sqlLink.data('sql'));
 		}
 	</script>
 </body>
